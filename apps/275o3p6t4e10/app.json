@@ -11,7 +11,8 @@
       "package": "com.appbuilder.a275o3p6t4e10",
       "adaptiveIcon": {
         "backgroundColor": "#ffffff"
-      }
+      },
+      "minSdkVersion": 24
     },
     "sdkVersion": "51.0.0"
   }
