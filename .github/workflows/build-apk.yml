@@ -4,17 +4,16 @@ on:
   workflow_dispatch:
     inputs:
       app_id:
-        description: 'App ID to build'
+        description: 'App ID (folder name under apps/)'
         required: true
       app_name:
-        description: 'App display name'
+        description: 'Human-readable app name'
         required: true
-        default: 'MyApp'
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
 
     steps:
       - name: Checkout
@@ -34,52 +33,126 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install dependencies
+      - name: Install app dependencies
         working-directory: apps/${{ github.event.inputs.app_id }}
         run: npm install --legacy-peer-deps
 
       - name: Expo Prebuild
         working-directory: apps/${{ github.event.inputs.app_id }}
-        run: npx expo prebuild --platform android
+        run: npx expo prebuild --platform android --no-install
         env:
-          NODE_OPTIONS: '--max-old-space-size=4096'
+          EXPO_NO_TELEMETRY: 1
 
-      - name: Mock react-native config
+      - name: Pre-generate PackageList.java and patch build.gradle
         working-directory: apps/${{ github.event.inputs.app_id }}
         run: |
-          PACKAGE=$(node -e "const app = require('./app.json'); console.log(app.expo.android.package)")
-          ROOT=$(pwd)
-          echo "Y29uc3QgZnMgPSByZXF1aXJlKCdmcycpOwpjb25zdCBwa2cgPSBwcm9jZXNzLmFyZ3ZbMl07CmNvbnN0IHJvb3QgPSBwcm9jZXNzLmFyZ3ZbM107CmNvbnN0IG5tID0gcm9vdCArICcvbm9kZV9tb2R1bGVzJzsKCmNvbnN0IG5hdGl2ZVBrZ3MgPSB7CiAgJ3JlYWN0LW5hdGl2ZS1nZXN0dXJlLWhhbmRsZXInOiB7CiAgICBwaTogJ2ltcG9ydCBjb20uc3dtYW5zaW9uLmdlc3R1cmVoYW5kbGVyLlJOR2VzdHVyZUhhbmRsZXJQYWNrYWdlOycsCiAgICBwbjogJ25ldyBSTkdlc3R1cmVIYW5kbGVyUGFja2FnZSgpJwogIH0sCiAgJ3JlYWN0LW5hdGl2ZS1yZWFuaW1hdGVkJzogewogICAgcGk6ICdpbXBvcnQgY29tLnN3bWFuc2lvbi5yZWFuaW1hdGVkLlJlYW5pbWF0ZWRQYWNrYWdlOycsCiAgICBwbjogJ25ldyBSZWFuaW1hdGVkUGFja2FnZSgpJwogIH0sCiAgJ3JlYWN0LW5hdGl2ZS1zYWZlLWFyZWEtY29udGV4dCc6IHsKICAgIHBpOiAnaW1wb3J0IGNvbS50aDNyZHdhdmUuc2FmZWFyZWFjb250ZXh0LlNhZmVBcmVhQ29udGV4dFBhY2thZ2U7JywKICAgIHBuOiAnbmV3IFNhZmVBcmVhQ29udGV4dFBhY2thZ2UoKScKICB9LAogICdyZWFjdC1uYXRpdmUtc2NyZWVucyc6IHsKICAgIHBpOiAnaW1wb3J0IGNvbS5zd21hbnNpb24ucm5zY3JlZW5zLlJOU2NyZWVuc1BhY2thZ2U7JywKICAgIHBuOiAnbmV3IFJOU2NyZWVuc1BhY2thZ2UoKScKICB9LAogICdyZWFjdC1uYXRpdmUtc3ZnJzogewogICAgcGk6ICdpbXBvcnQgY29tLmhvcmNydXguc3ZnLlN2Z1BhY2thZ2U7JywKICAgIHBuOiAnbmV3IFN2Z1BhY2thZ2UoKScKICB9Cn07Cgpjb25zdCBkZXBzID0ge307CmZvciAoY29uc3QgW25hbWUsIGluZm9dIG9mIE9iamVjdC5lbnRyaWVzKG5hdGl2ZVBrZ3MpKSB7CiAgZGVwc1tuYW1lXSA9IHsKICAgIHJvb3Q6IG5tICsgJy8nICsgbmFtZSwKICAgIG5hbWUsCiAgICBwbGF0Zm9ybXM6IHsKICAgICAgYW5kcm9pZDogewogICAgICAgIHNvdXJjZURpcjogbm0gKyAnLycgKyBuYW1lICsgJy9hbmRyb2lkJywKICAgICAgICBwYWNrYWdlSW1wb3J0UGF0aDogaW5mby5waSwKICAgICAgICBwYWNrYWdlSW5zdGFuY2U6IGluZm8ucG4sCiAgICAgICAgYnVpbGRUeXBlczogW10sCiAgICAgICAgbGlicmFyeU5hbWU6IG51bGwsCiAgICAgICAgY29tcG9uZW50RGVzY3JpcHRvcnM6IFtdLAogICAgICAgIGNtYWtlTGlzdHNQYXRoOiBudWxsLAogICAgICAgIGN4eE1vZHVsZUNNYWtlTGlzdHNNb2R1bGVOYW1lOiBudWxsLAogICAgICAgIGN4eE1vZHVsZUNNYWtlTGlzdHNQYXRoOiBudWxsLAogICAgICAgIGN4eE1vZHVsZUhlYWRlck5hbWU6IG51bGwsCiAgICAgICAgZGVwZW5kZW5jeUNvbmZpZ3VyYXRpb246IG51bGwsCiAgICAgICAgaXNQdXJlQ3h4RGVwZW5kZW5jeTogZmFsc2UKICAgICAgfSwKICAgICAgaW9zOiBudWxsCiAgICB9CiAgfTsKfQoKY29uc3QgY29uZmlnID0gewogIHByb2plY3Q6IHsKICAgIGFuZHJvaWQ6IHsKICAgICAgcGFja2FnZU5hbWU6IHBrZywKICAgICAgc291cmNlRGlyOiByb290ICsgJy9hbmRyb2lkJywKICAgICAgYXBwTmFtZTogJ2FwcCcsCiAgICAgIHBhY2thZ2VGb2xkZXI6IHBrZy5yZXBsYWNlKC9cLi9nLCAnLycpLAogICAgICBtYW5pZmVzdFBhdGg6IHJvb3QgKyAnL2FuZHJvaWQvYXBwL3NyYy9tYWluL0FuZHJvaWRNYW5pZmVzdC54bWwnLAogICAgICBidWlsZEdyYWRsZVBhdGg6IHJvb3QgKyAnL2FuZHJvaWQvYXBwL2J1aWxkLmdyYWRsZScsCiAgICAgIHNldHRpbmdzR3JhZGxlUGF0aDogcm9vdCArICcvYW5kcm9pZC9zZXR0aW5ncy5ncmFkbGUnLAogICAgICBhc3NldHNQYXRoOiByb290ICsgJy9hbmRyb2lkL2FwcC9zcmMvbWFpbi9hc3NldHMnLAogICAgICBtYWluRmlsZVBhdGg6IHJvb3QgKyAnL2luZGV4LmpzJwogICAgfSwKICAgIGlvczogbnVsbAogIH0sCiAgZGVwZW5kZW5jaWVzOiBkZXBzCn07Cgpmcy53cml0ZUZpbGVTeW5jKCcvdG1wL3JuLWNvbmZpZy5qc29uJywgSlNPTi5zdHJpbmdpZnkoY29uZmlnKSk7CmNvbnNvbGUubG9nKCdSTiBjb25maWcgbW9jayB3cml0dGVuIGZvcjogJyArIHBrZyk7Cg==" | base64 -d > /tmp/gen-rn-config.js
-          node /tmp/gen-rn-config.js "$PACKAGE" "$ROOT"
-          echo "Y29uc3QgZnMgPSByZXF1aXJlKCdmcycpOwpjb25zdCBhcmdzID0gcHJvY2Vzcy5hcmd2LnNsaWNlKDIpOwpmcy5hcHBlbmRGaWxlU3luYygnL3RtcC9ybi1jbGktY2FsbHMubG9nJywgJ01PQ0sgQ0FMTEVEIHdpdGg6ICcgKyBKU09OLnN0cmluZ2lmeShhcmdzKSArICcgY3dkPScgKyBwcm9jZXNzLmN3ZCgpICsgJ1xuJyk7CmlmIChhcmdzWzBdID09PSAnY29uZmlnJykgewogIHByb2Nlc3Muc3Rkb3V0LndyaXRlKGZzLnJlYWRGaWxlU3luYygnL3RtcC9ybi1jb25maWcuanNvbicsICd1dGY4JykpOwogIHByb2Nlc3MuZXhpdCgwKTsKfQovLyBwYXNzLXRocm91Z2ggbm90IG5lZWRlZCAtIGp1c3QgZXhpdApwcm9jZXNzLmV4aXQoMSk7Cg==" | base64 -d > /tmp/mock-cli.js
-          if [ -f "node_modules/react-native/cli.js" ]; then
-            cp node_modules/react-native/cli.js node_modules/react-native/cli.js.orig
-            cp /tmp/mock-cli.js node_modules/react-native/cli.js
-            echo "Patched react-native/cli.js - content:"
-            cat node_modules/react-native/cli.js
-          fi
-          echo "Testing mock directly:"
-          node node_modules/react-native/cli.js config 2>&1 | head -c 100
+          set -e
 
-      - name: Gradle debug - find RNGP CLI call
-        working-directory: apps/${{ github.event.inputs.app_id }}/android
-        run: |
-          chmod +x gradlew
-          ./gradlew generateDebugAutolinkingPackageList --no-daemon --debug 2>&1 | grep -E "node |react-native|cli\.js|bin\.js|AutolinkingPackageList|packageName" | head -40 || true
-          echo "=== Mock call log ==="
-          cat /tmp/rn-cli-calls.log 2>/dev/null || echo "(no calls logged)"
-        env:
-          GRADLE_OPTS: '-Dorg.gradle.jvmargs=-Xmx4g'
+          # Detect package name from app.json
+          PACKAGE_NAME=$(node -e "const a=require('./app.json'); console.log(a.expo.android.package)")
+          echo "Package name: $PACKAGE_NAME"
+
+          # Create the generated output directory
+          AUTOLINKING_DIR="android/app/build/generated/autolinking/src/main/java/com/facebook/react"
+          mkdir -p "$AUTOLINKING_DIR"
+
+          # Write PackageList.java
+          node -e "
+          const fs = require('fs');
+          const dir = '$AUTOLINKING_DIR';
+          const content = `package com.facebook.react;
+
+          import android.app.Application;
+          import android.content.Context;
+          import android.content.res.Resources;
+          import com.facebook.react.ReactPackage;
+          import com.facebook.react.shell.MainPackageConfig;
+          import com.facebook.react.shell.MainReactPackage;
+          import java.util.Arrays;
+          import java.util.ArrayList;
+          import com.swmansion.gesturehandler.RNGestureHandlerPackage;
+          import com.swmansion.reanimated.ReanimatedPackage;
+          import com.th3rdwave.safeareacontext.SafeAreaContextPackage;
+          import com.swmansion.rnscreens.RNScreensPackage;
+          import com.horcrux.svg.SvgPackage;
+
+          public class PackageList {
+            private Application application;
+            private ReactNativeHost reactNativeHost;
+            private ReactInstanceManager reactInstanceManager;
+            private MainPackageConfig mConfig;
+
+            public PackageList(ReactInstanceManager reactInstanceManager) {
+              this(reactInstanceManager.getCurrentReactContext().getApplicationContext());
+              this.reactInstanceManager = reactInstanceManager;
+              reactNativeHost = null;
+            }
+
+            public PackageList(Application application) {
+              this(application, null);
+              reactNativeHost = null;
+            }
+
+            public PackageList(ReactNativeHost reactNativeHost) {
+              this(reactNativeHost.getApplication(), reactNativeHost.getUseDeveloperSupport() ? MainPackageConfig.builder().build() : null);
+              this.reactNativeHost = reactNativeHost;
+            }
+
+            public PackageList(Application application, MainPackageConfig hardcodedConfig) {
+              this.application = application;
+              mConfig = hardcodedConfig;
+            }
+
+            private ReactNativeHost getReactNativeHost() {
+              return reactNativeHost;
+            }
+
+            private Resources getResources() {
+              return getApplication().getResources();
+            }
+
+            private Application getApplication() {
+              if (this.reactNativeHost == null) return this.application;
+              return this.reactNativeHost.getApplication();
+            }
+
+            private Context getApplicationContext() {
+              return getApplication().getApplicationContext();
+            }
+
+            public ArrayList<ReactPackage> getPackages() {
+              return new ArrayList<>(Arrays.asList(
+                new MainReactPackage(mConfig),
+                new RNGestureHandlerPackage(),
+                new ReanimatedPackage(),
+                new SafeAreaContextPackage(),
+                new RNScreensPackage(),
+                new SvgPackage()
+              ));
+            }
+          }
+          `;
+          fs.writeFileSync(dir + '/PackageList.java', content);
+          console.log('PackageList.java written to ' + dir);
+          "
+
+          echo "=== PackageList.java ==="
+          cat "$AUTOLINKING_DIR/PackageList.java"
+
+          # Patch android/app/build.gradle to disable autolinking tasks
+          printf '\n// Disable autolinking — PackageList.java is pre-generated\nafterEvaluate {\n    project.tasks.matching { it.name.startsWith("generate") && it.name.endsWith("AutolinkingPackageList") }.configureEach {\n        enabled = false\n    }\n}\n' >> android/app/build.gradle
+
+          echo "=== Last 15 lines of build.gradle ==="
+          tail -15 android/app/build.gradle
 
       - name: Build APK
         working-directory: apps/${{ github.event.inputs.app_id }}/android
-        run: ./gradlew assembleDebug --no-daemon
-        env:
-          GRADLE_OPTS: '-Dorg.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=512m'
+        run: ./gradlew assembleDebug --no-daemon -Dorg.gradle.jvmargs="-Xmx4g"
 
-      - name: Upload APK
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
+        if: success()
         with:
-          name: app-${{ github.event.inputs.app_id }}-debug
+          name: app-debug-apk
           path: apps/${{ github.event.inputs.app_id }}/android/app/build/outputs/apk/debug/*.apk
           retention-days: 7
