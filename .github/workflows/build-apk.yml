@@ -44,9 +44,26 @@ jobs:
         env:
           NODE_OPTIONS: '--max-old-space-size=4096'
 
-      - name: Patch applicationPackageName in build.gradle
+      - name: Debug react-native config
         working-directory: apps/${{ github.event.inputs.app_id }}
-        run: node -e "const fs=require('fs'),app=JSON.parse(fs.readFileSync('app.json')),pkg=app.expo.android.package,g=fs.readFileSync('android/app/build.gradle','utf8');fs.writeFileSync('android/app/build.gradle',g.replace('react {','react {\n        applicationPackageName = \"'+pkg+'\"'));console.log('Patched:',pkg);"
+        run: |
+          echo "=== Running from PROJECT ROOT ==="
+          node node_modules/.bin/react-native config > /tmp/rn-stdout.txt 2>/tmp/rn-stderr.txt; RC=$?
+          echo "Exit code: $RC"
+          echo "STDOUT length: $(wc -c < /tmp/rn-stdout.txt)"
+          echo "STDOUT (first 1000):"
+          head -c 1000 /tmp/rn-stdout.txt
+          echo "STDERR (first 1000):"
+          head -c 1000 /tmp/rn-stderr.txt
+          echo ""
+          echo "=== Running from ANDROID DIR (as RNGP does) ==="
+          cd android && node ../node_modules/.bin/react-native config > /tmp/rn2-stdout.txt 2>/tmp/rn2-stderr.txt; RC2=$?
+          echo "Exit code: $RC2"
+          echo "STDOUT length: $(wc -c < /tmp/rn2-stdout.txt)"
+          echo "STDOUT (first 1000):"
+          head -c 1000 /tmp/rn2-stdout.txt
+          echo "STDERR (first 1000):"
+          head -c 1000 /tmp/rn2-stderr.txt
 
       - name: Make gradlew executable
         working-directory: apps/${{ github.event.inputs.app_id }}/android
