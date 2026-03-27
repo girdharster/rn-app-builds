@@ -46,13 +46,7 @@ jobs:
 
       - name: Patch applicationPackageName in build.gradle
         working-directory: apps/${{ github.event.inputs.app_id }}
-        run: |
-          PACKAGE=$(node -e "const app = require('./app.json'); console.log(app.expo.android.package)")
-          echo "Package: $PACKAGE"
-          sed -i "s/react {/react {
-        applicationPackageName = \"$PACKAGE\"/" android/app/build.gradle
-          echo "react {} block after patch:"
-          grep -A 6 "react {" android/app/build.gradle | head -10
+        run: node -e "const fs=require('fs'),app=JSON.parse(fs.readFileSync('app.json')),pkg=app.expo.android.package,g=fs.readFileSync('android/app/build.gradle','utf8');fs.writeFileSync('android/app/build.gradle',g.replace('react {','react {\n        applicationPackageName = \"'+pkg+'\"'));console.log('Patched:',pkg);"
 
       - name: Make gradlew executable
         working-directory: apps/${{ github.event.inputs.app_id }}/android
