@@ -106,10 +106,38 @@ jobs:
         run: |
           ./gradlew assembleDebug --no-daemon -Dorg.gradle.jvmargs="-Xmx4g -XX:MaxMetaspaceSize=512m"
 
+
+      - name: Sign APK with production keystore
+        working-directory: apps/${{ github.event.inputs.app_id }}/android
+        run: |
+          set -e
+
+          # Decode production keystore (appypie.keystore, alias: appypie)
+          printf '%s' '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' | base64 -d > /tmp/appypie.keystore
+          echo "Keystore decoded, size: $(wc -c < /tmp/appypie.keystore) bytes"
+
+          # Find apksigner from latest installed build-tools
+          APKSIGNER=$(ls $ANDROID_HOME/build-tools/*/apksigner 2>/dev/null | sort -V | tail -1)
+          echo "Using apksigner: $APKSIGNER"
+
+          APK_IN="app/build/outputs/apk/debug/app-debug.apk"
+          APK_OUT="app/build/outputs/apk/debug/app-signed.apk"
+
+          "$APKSIGNER" sign \
+            --ks /tmp/appypie.keystore \
+            --ks-key-alias appypie \
+            --ks-pass pass:Appypie123 \
+            --key-pass pass:Appypie123 \
+            --out "$APK_OUT" \
+            "$APK_IN"
+
+          echo "APK signed successfully"
+          "$APKSIGNER" verify --verbose "$APK_OUT" | head -5
+
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         if: success()
         with:
-          name: app-debug-${{ github.event.inputs.app_id }}
-          path: apps/${{ github.event.inputs.app_id }}/android/app/build/outputs/apk/debug/app-debug.apk
+          name: app-signed-${{ github.event.inputs.app_id }}
+          path: apps/${{ github.event.inputs.app_id }}/android/app/build/outputs/apk/debug/app-signed.apk
           retention-days: 7
