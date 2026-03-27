@@ -88,19 +88,8 @@ jobs:
           echo "Launcher icons ensured."
 
           # 4. Disable generateAutolinkingPackageList Gradle task
-          python3 -c "
-with open('android/app/build.gradle', 'a') as f:
-    f.write('''
-
-// Disable autolinking - PackageList.java is pre-generated
-afterEvaluate {
-    project.tasks.matching { it.name.startsWith(\"generate\") && it.name.endsWith(\"AutolinkingPackageList\") }.configureEach {
-        enabled = false
-    }
-}
-''')
-print('build.gradle patched')
-"
+          printf '\nafterEvaluate {\n    project.tasks.matching { t -> t.name.startsWith("generate") && t.name.endsWith("AutolinkingPackageList") }.configureEach { enabled = false }\n}\n' >> android/app/build.gradle
+          echo "build.gradle patched"
 
       - name: Build APK
         working-directory: apps/${{ github.event.inputs.app_id }}/android
