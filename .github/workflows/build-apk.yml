@@ -126,8 +126,8 @@ jobs:
           "$APKSIGNER" sign \
             --ks /tmp/appypie.keystore \
             --ks-key-alias appypie \
-            --ks-pass pass:Appypie123 \
-            --key-pass pass:Appypie123 \
+            --ks-pass pass:appypie123 \
+            --key-pass pass:appypie123 \
             --out "$APK_OUT" \
             "$APK_IN"
 
