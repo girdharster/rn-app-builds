@@ -1,0 +1,18 @@
+{
+  "expo": {
+    "name": "flappy-bird-expo",
+    "slug": "275o3p6t4e10",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "platforms": [
+      "android"
+    ],
+    "android": {
+      "package": "com.appbuilder.275o3p6t4e10",
+      "adaptiveIcon": {
+        "backgroundColor": "#ffffff"
+      }
+    },
+    "sdkVersion": "51.0.0"
+  }
+}

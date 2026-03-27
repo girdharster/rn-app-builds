@@ -1,0 +1,19 @@
+{
+  "name": "flappy-bird-expo",
+  "version": "1.0.0",
+  "main": "expo-router/entry",
+  "dependencies": {
+    "expo": "~52.0.0",
+    "expo-router": "~4.0.0",
+    "expo-status-bar": "~2.0.0",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "react-native": "0.76.9",
+    "react-native-web": "~0.19.13",
+    "expo-linking": "~7.0.0",
+    "expo-constants": "~17.0.0",
+    "@expo/vector-icons": "^14.0.0",
+    "react-native-safe-area-context": "~5.0.0",
+    "react-native-screens": "~4.4.0"
+  }
+}
