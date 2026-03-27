@@ -73,15 +73,10 @@ jobs:
           # 2b. Ensure splashscreen_background color exists (expo prebuild references it but may not create it)
           mkdir -p "android/app/src/main/res/values"
           if [ ! -f "android/app/src/main/res/values/colors.xml" ]; then
-            printf '<?xml version="1.0" encoding="utf-8"?>
-<resources>
-  <color name="splashscreen_background">#ffffff</color>
-</resources>
-' > android/app/src/main/res/values/colors.xml
+            printf '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n  <color name="splashscreen_background">#ffffff</color>\n</resources>\n' > android/app/src/main/res/values/colors.xml
             echo "Created colors.xml with splashscreen_background"
           elif ! grep -q "splashscreen_background" android/app/src/main/res/values/colors.xml; then
-            sed -i 's|</resources>|  <color name="splashscreen_background">#ffffff</color>
-</resources>|' android/app/src/main/res/values/colors.xml
+            sed -i 's|</resources>|  <color name="splashscreen_background">#ffffff</color>\n</resources>|' android/app/src/main/res/values/colors.xml
             echo "Added splashscreen_background to existing colors.xml"
           fi
 
