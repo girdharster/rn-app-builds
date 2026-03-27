@@ -49,8 +49,6 @@ jobs:
         run: |
           PACKAGE=$(node -e "const app = require('./app.json'); console.log(app.expo.android.package)")
           echo "Package: $PACKAGE"
-          # Inject applicationPackageName into the react {} block so RNGP
-          # skips the react-native config CLI call entirely
           sed -i "s/react {/react {
         applicationPackageName = \"$PACKAGE\"/" android/app/build.gradle
           echo "react {} block after patch:"
