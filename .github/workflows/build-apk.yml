@@ -37,7 +37,7 @@ jobs:
         working-directory: apps/${{ github.event.inputs.app_id }}
         run: |
           npm install --legacy-peer-deps
-          echo "Installed react-native: $(node -e "console.log(require('./node_modules/react-native/package.json').version)")"
+          echo "Installed RN: $(node -e "console.log(require('./node_modules/react-native/package.json').version)")"
 
       - name: Expo Prebuild
         working-directory: apps/${{ github.event.inputs.app_id }}
@@ -45,46 +45,44 @@ jobs:
         env:
           EXPO_NO_TELEMETRY: 1
 
-      - name: Pre-generate PackageList.java and patch build files
+      - name: Patch build environment
         working-directory: apps/${{ github.event.inputs.app_id }}
         run: |
           set -e
 
-          # 1. Pre-generate PackageList.java
+          # 1. Pre-generate PackageList.java (bypasses RNGP autolinking)
           AUTOLINKING_DIR="android/app/build/generated/autolinking/src/main/java/com/facebook/react"
           mkdir -p "$AUTOLINKING_DIR"
-          echo "cGFja2FnZSBjb20uZmFjZWJvb2sucmVhY3Q7CgppbXBvcnQgYW5kcm9pZC5hcHAuQXBwbGljYXRpb247CmltcG9ydCBhbmRyb2lkLmNvbnRlbnQuQ29udGV4dDsKaW1wb3J0IGFuZHJvaWQuY29udGVudC5yZXMuUmVzb3VyY2VzOwppbXBvcnQgY29tLmZhY2Vib29rLnJlYWN0LlJlYWN0UGFja2FnZTsKaW1wb3J0IGNvbS5mYWNlYm9vay5yZWFjdC5zaGVsbC5NYWluUGFja2FnZUNvbmZpZzsKaW1wb3J0IGNvbS5mYWNlYm9vay5yZWFjdC5zaGVsbC5NYWluUmVhY3RQYWNrYWdlOwppbXBvcnQgamF2YS51dGlsLkFycmF5czsKaW1wb3J0IGphdmEudXRpbC5BcnJheUxpc3Q7CmltcG9ydCBjb20uc3dtYW5zaW9uLmdlc3R1cmVoYW5kbGVyLlJOR2VzdHVyZUhhbmRsZXJQYWNrYWdlOwppbXBvcnQgY29tLnN3bWFuc2lvbi5yZWFuaW1hdGVkLlJlYW5pbWF0ZWRQYWNrYWdlOwppbXBvcnQgY29tLnRoM3Jkd2F2ZS5zYWZlYXJlYWNvbnRleHQuU2FmZUFyZWFDb250ZXh0UGFja2FnZTsKaW1wb3J0IGNvbS5zd21hbnNpb24ucm5zY3JlZW5zLlJOU2NyZWVuc1BhY2thZ2U7CmltcG9ydCBjb20uaG9yY3J1eC5zdmcuU3ZnUGFja2FnZTsKCnB1YmxpYyBjbGFzcyBQYWNrYWdlTGlzdCB7CiAgcHJpdmF0ZSBBcHBsaWNhdGlvbiBhcHBsaWNhdGlvbjsKICBwcml2YXRlIFJlYWN0TmF0aXZlSG9zdCByZWFjdE5hdGl2ZUhvc3Q7CiAgcHJpdmF0ZSBSZWFjdEluc3RhbmNlTWFuYWdlciByZWFjdEluc3RhbmNlTWFuYWdlcjsKICBwcml2YXRlIE1haW5QYWNrYWdlQ29uZmlnIG1Db25maWc7CgogIHB1YmxpYyBQYWNrYWdlTGlzdChSZWFjdEluc3RhbmNlTWFuYWdlciByZWFjdEluc3RhbmNlTWFuYWdlcikgewogICAgdGhpcyhyZWFjdEluc3RhbmNlTWFuYWdlci5nZXRDdXJyZW50UmVhY3RDb250ZXh0KCkuZ2V0QXBwbGljYXRpb25Db250ZXh0KCkpOwogICAgdGhpcy5yZWFjdEluc3RhbmNlTWFuYWdlciA9IHJlYWN0SW5zdGFuY2VNYW5hZ2VyOwogICAgcmVhY3ROYXRpdmVIb3N0ID0gbnVsbDsKICB9CgogIHB1YmxpYyBQYWNrYWdlTGlzdChBcHBsaWNhdGlvbiBhcHBsaWNhdGlvbikgewogICAgdGhpcyhhcHBsaWNhdGlvbiwgbnVsbCk7CiAgICByZWFjdE5hdGl2ZUhvc3QgPSBudWxsOwogIH0KCiAgcHVibGljIFBhY2thZ2VMaXN0KFJlYWN0TmF0aXZlSG9zdCByZWFjdE5hdGl2ZUhvc3QpIHsKICAgIHRoaXMocmVhY3ROYXRpdmVIb3N0LmdldEFwcGxpY2F0aW9uKCksIHJlYWN0TmF0aXZlSG9zdC5nZXRVc2VEZXZlbG9wZXJTdXBwb3J0KCkgPyBNYWluUGFja2FnZUNvbmZpZy5idWlsZGVyKCkuYnVpbGQoKSA6IG51bGwpOwogICAgdGhpcy5yZWFjdE5hdGl2ZUhvc3QgPSByZWFjdE5hdGl2ZUhvc3Q7CiAgfQoKICBwdWJsaWMgUGFja2FnZUxpc3QoQXBwbGljYXRpb24gYXBwbGljYXRpb24sIE1haW5QYWNrYWdlQ29uZmlnIGhhcmRjb2RlZENvbmZpZykgewogICAgdGhpcy5hcHBsaWNhdGlvbiA9IGFwcGxpY2F0aW9uOwogICAgbUNvbmZpZyA9IGhhcmRjb2RlZENvbmZpZzsKICB9CgogIHByaXZhdGUgUmVhY3ROYXRpdmVIb3N0IGdldFJlYWN0TmF0aXZlSG9zdCgpIHsKICAgIHJldHVybiByZWFjdE5hdGl2ZUhvc3Q7CiAgfQoKICBwcml2YXRlIFJlc291cmNlcyBnZXRSZXNvdXJjZXMoKSB7CiAgICByZXR1cm4gZ2V0QXBwbGljYXRpb24oKS5nZXRSZXNvdXJjZXMoKTsKICB9CgogIHByaXZhdGUgQXBwbGljYXRpb24gZ2V0QXBwbGljYXRpb4oKSB7CiAgICBpZiAodGhpcy5yZWFjdE5hdGl2ZUhvc3QgPT0gbnVsbCkgcmV0dXJuIHRoaXMuYXBwbGljYXRpb247CiAgICByZXR1cm4gdGhpcy5yZWFjdE5hdGl2ZUhvc3QuZ2V0QXBwbGljYXRpb24oKTsKICB9CgogIHByaXZhdGUgQ29udGV4dCBnZXRBcHBsaWNhdGlvbkNvbnRleHQoKSB7CiAgICByZXR1cm4gZ2V0QXBwbGljYXRpb24oKS5nZXRBcHBsaWNhdGlvbkNvbnRleHQoKTsKICB9CgogIHB1YmxpYyBBcnJheUxpc3Q8UmVhY3RQYWNrYWdlPiBnZXRQYWNrYWdlcygpIHsKICAgIHJldHVybiBuZXcgQXJyYXlMaXN0PD4oQXJyYXlzLmFzTGlzdCgKICAgICAgbmV3IE1haW5SZWFjdFBhY2thZ2UobUNvbmZpZyksCiAgICAgIG5ldyBSTkdlc3R1cmVIYW5kbGVyUGFja2FnZSgpLAogICAgICBuZXcgUmVhbmltYXRlZFBhY2thZ2UoKSwKICAgICAgbmV3IFNhZmVBcmVhQ29udGV4dFBhY2thZ2UoKSwKICAgICAgbmV3IFJOU2NyZWVuc1BhY2thZ2UoKSwKICAgICAgbmV3IFN2Z1BhY2thZ2UoKQogICAgKSk7CiAgfQp9Cg==" | base64 -d > "$AUTOLINKING_DIR/PackageList.java"
-          echo "PackageList.java written."
+          printf '%s' 'cGFja2FnZSBjb20uZmFjZWJvb2sucmVhY3Q7CgppbXBvcnQgYW5kcm9pZC5hcHAuQXBwbGljYXRpb247CmltcG9ydCBhbmRyb2lkLmNvbnRlbnQuQ29udGV4dDsKaW1wb3J0IGFuZHJvaWQuY29udGVudC5yZXMuUmVzb3VyY2VzOwppbXBvcnQgY29tLmZhY2Vib29rLnJlYWN0LlJlYWN0UGFja2FnZTsKaW1wb3J0IGNvbS5mYWNlYm9vay5yZWFjdC5zaGVsbC5NYWluUGFja2FnZUNvbmZpZzsKaW1wb3J0IGNvbS5mYWNlYm9vay5yZWFjdC5zaGVsbC5NYWluUmVhY3RQYWNrYWdlOwppbXBvcnQgamF2YS51dGlsLkFycmF5czsKaW1wb3J0IGphdmEudXRpbC5BcnJheUxpc3Q7CmltcG9ydCBjb20uc3dtYW5zaW9uLmdlc3R1cmVoYW5kbGVyLlJOR2VzdHVyZUhhbmRsZXJQYWNrYWdlOwppbXBvcnQgY29tLnN3bWFuc2lvbi5yZWFuaW1hdGVkLlJlYW5pbWF0ZWRQYWNrYWdlOwppbXBvcnQgY29tLnRoM3Jkd2F2ZS5zYWZlYXJlYWNvbnRleHQuU2FmZUFyZWFDb250ZXh0UGFja2FnZTsKaW1wb3J0IGNvbS5zd21hbnNpb24ucm5zY3JlZW5zLlJOU2NyZWVuc1BhY2thZ2U7CmltcG9ydCBjb20uaG9yY3J1eC5zdmcuU3ZnUGFja2FnZTsKCnB1YmxpYyBjbGFzcyBQYWNrYWdlTGlzdCB7CiAgcHJpdmF0ZSBBcHBsaWNhdGlvbiBhcHBsaWNhdGlvbjsKICBwcml2YXRlIFJlYWN0TmF0aXZlSG9zdCByZWFjdE5hdGl2ZUhvc3Q7CiAgcHJpdmF0ZSBSZWFjdEluc3RhbmNlTWFuYWdlciByZWFjdEluc3RhbmNlTWFuYWdlcjsKICBwcml2YXRlIE1haW5QYWNrYWdlQ29uZmlnIG1Db25maWc7CgogIHB1YmxpYyBQYWNrYWdlTGlzdChSZWFjdEluc3RhbmNlTWFuYWdlciByZWFjdEluc3RhbmNlTWFuYWdlcikgewogICAgdGhpcyhyZWFjdEluc3RhbmNlTWFuYWdlci5nZXRDdXJyZW50UmVhY3RDb250ZXh0KCkuZ2V0QXBwbGljYXRpb25Db250ZXh0KCkpOwogICAgdGhpcy5yZWFjdEluc3RhbmNlTWFuYWdlciA9IHJlYWN0SW5zdGFuY2VNYW5hZ2VyOwogICAgcmVhY3ROYXRpdmVIb3N0ID0gbnVsbDsKICB9CgogIHB1YmxpYyBQYWNrYWdlTGlzdChBcHBsaWNhdGlvbiBhcHBsaWNhdGlvbikgewogICAgdGhpcyhhcHBsaWNhdGlvbiwgbnVsbCk7CiAgICByZWFjdE5hdGl2ZUhvc3QgPSBudWxsOwogIH0KCiAgcHVibGljIFBhY2thZ2VMaXN0KFJlYWN0TmF0aXZlSG9zdCByZWFjdE5hdGl2ZUhvc3QpIHsKICAgIHRoaXMocmVhY3ROYXRpdmVIb3N0LmdldEFwcGxpY2F0aW9uKCksIHJlYWN0TmF0aXZlSG9zdC5nZXRVc2VEZXZlbG9wZXJTdXBwb3J0KCkgPyBNYWluUGFja2FnZUNvbmZpZy5idWlsZGVyKCkuYnVpbGQoKSA6IG51bGwpOwogICAgdGhpcy5yZWFjdE5hdGl2ZUhvc3QgPSByZWFjdE5hdGl2ZUhvc3Q7CiAgfQoKICBwdWJsaWMgUGFja2FnZUxpc3QoQXBwbGljYXRpb24gYXBwbGljYXRpb24sIE1haW5QYWNrYWdlQ29uZmlnIGhhcmRjb2RlZENvbmZpZykgewogICAgdGhpcy5hcHBsaWNhdGlvbiA9IGFwcGxpY2F0aW9uOwogICAgbUNvbmZpZyA9IGhhcmRjb2RlZENvbmZpZzsKICB9CgogIHByaXZhdGUgUmVhY3ROYXRpdmVIb3N0IGdldFJlYWN0TmF0aXZlSG9zdCgpIHsKICAgIHJldHVybiByZWFjdE5hdGl2ZUhvc3Q7CiAgfQoKICBwcml2YXRlIFJlc291cmNlcyBnZXRSZXNvdXJjZXMoKSB7CiAgICByZXR1cm4gZ2V0QXBwbGljYXRpb24oKS5nZXRSZXNvdXJjZXMoKTsKICB9CgogIHByaXZhdGUgQXBwbGljYXRpb24gZ2V0QXBwbGljYXRpb24oKSB7CiAgICBpZiAodGhpcy5yZWFjdE5hdGl2ZUhvc3QgPT0gbnVsbCkgcmV0dXJuIHRoaXMuYXBwbGljYXRpb247CiAgICByZXR1cm4gdGhpcy5yZWFjdE5hdGl2ZUhvc3QuZ2V0QXBwbGljYXRpb24oKTsKICB9CgogIHByaXZhdGUgQ29udGV4dCBnZXRBcHBsaWNhdGlvbkNvbnRleHQoKSB7CiAgICByZXR1cm4gZ2V0QXBwbGljYXRpb24oKS5nZXRBcHBsaWNhdGlvbkNvbnRleHQoKTsKICB9CgogIHB1YmxpYyBBcnJheUxpc3Q8UmVhY3RQYWNrYWdlPiBnZXRQYWNrYWdlcygpIHsKICAgIHJldHVybiBuZXcgQXJyYXlMaXN0PD4oQXJyYXlzLmFzTGlzdCgKICAgICAgbmV3IE1haW5SZWFjdFBhY2thZ2UobUNvbmZpZyksCiAgICAgIG5ldyBSTkdlc3R1cmVIYW5kbGVyUGFja2FnZSgpLAogICAgICBuZXcgUmVhbmltYXRlZFBhY2thZ2UoKSwKICAgICAgbmV3IFNhZmVBcmVhQ29udGV4dFBhY2thZ2UoKSwKICAgICAgbmV3IFJOU2NyZWVuc1BhY2thZ2UoKSwKICAgICAgbmV3IFN2Z1BhY2thZ2UoKQogICAgKSk7CiAgfQp9Cg==' | base64 -d > "$AUTOLINKING_DIR/PackageList.java"
+          echo "PackageList.java written ($(wc -c < "$AUTOLINKING_DIR/PackageList.java") bytes)"
 
-          # 2. Fix minSdkVersion (RN 0.75+ requires 24, format is findProperty-based)
+          # 2. Fix minSdkVersion (RN 0.75+ requires minSdk 24)
           echo "android.minSdkVersion=24" >> android/gradle.properties
-          echo "minSdkVersion set to 24"
+          echo "minSdkVersion=24 set in gradle.properties"
 
-          # 3. Create missing launcher icon resources (expo prebuild without icon field skips these)
+          # 3. Ensure launcher icon resources exist
           MAIN_RES="android/app/src/main/res"
-          WHITE_PNG="iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwADhQGAWjR9awAAAABJRU5ErkJggg=="
-
-          # Solid color background drawable
           mkdir -p "$MAIN_RES/drawable"
+
           if [ ! -f "$MAIN_RES/drawable/ic_launcher_background.xml" ]; then
-            printf '<?xml version="1.0" encoding="utf-8"?>\n<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">\n    <solid android:color="#ffffff"/>\n</shape>\n' > "$MAIN_RES/drawable/ic_launcher_background.xml"
+            printf '<?xml version="1.0" encoding="utf-8"?><shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle"><solid android:color="#ffffff"/></shape>' > "$MAIN_RES/drawable/ic_launcher_background.xml"
             echo "Created ic_launcher_background.xml"
           fi
 
-          # Minimal PNG for all mipmap densities
           for DENSITY in mipmap-mdpi mipmap-hdpi mipmap-xhdpi mipmap-xxhdpi mipmap-xxxhdpi; do
             mkdir -p "$MAIN_RES/$DENSITY"
             for ICON in ic_launcher.png ic_launcher_round.png ic_launcher_foreground.png; do
               if [ ! -f "$MAIN_RES/$DENSITY/$ICON" ]; then
-                echo "$WHITE_PNG" | base64 -d > "$MAIN_RES/$DENSITY/$ICON"
+                printf '%s' 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGP4//8/AAX+Av4N70a4AAAAAElFTkSuQmCC' | base64 -d > "$MAIN_RES/$DENSITY/$ICON"
               fi
             done
           done
           echo "Launcher icons ensured."
 
-          # 4. Patch android/app/build.gradle to disable autolinking task
+          # 4. Disable generateAutolinkingPackageList Gradle task
           python3 -c "
-          patch = '''
+          with open('android/app/build.gradle', 'a') as f:
+              f.write('''
 
           // Disable autolinking - PackageList.java is pre-generated
           afterEvaluate {
@@ -92,9 +90,7 @@ jobs:
                   enabled = false
               }
           }
-          '''
-          with open('android/app/build.gradle', 'a') as f:
-              f.write(patch)
+          ''')
           print('build.gradle patched')
           "
 
