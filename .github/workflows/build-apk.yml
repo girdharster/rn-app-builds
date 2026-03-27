@@ -44,6 +44,15 @@ jobs:
         env:
           NODE_OPTIONS: '--max-old-space-size=4096'
 
+      - name: Fix react-native config (inject packageName for autolinking)
+        working-directory: apps/${{ github.event.inputs.app_id }}
+        run: |
+          PACKAGE=$(node -e "const app = require('./app.json'); console.log(app.expo.android.package)")
+          echo "Detected package name: $PACKAGE"
+          echo "module.exports = { project: { android: { packageName: '$PACKAGE' } } };" > react-native.config.js
+          echo "react-native.config.js written:"
+          cat react-native.config.js
+
       - name: Make gradlew executable
         working-directory: apps/${{ github.event.inputs.app_id }}/android
         run: chmod +x gradlew
