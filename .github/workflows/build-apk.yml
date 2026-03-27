@@ -1,0 +1,60 @@
+name: Build Android APK
+
+on:
+  workflow_dispatch:
+    inputs:
+      app_id:
+        description: 'App ID to build'
+        required: true
+      app_name:
+        description: 'App display name'
+        required: true
+        default: 'MyApp'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install dependencies
+        working-directory: apps/${{ github.event.inputs.app_id }}
+        run: npm install --legacy-peer-deps
+
+      - name: Expo Prebuild
+        working-directory: apps/${{ github.event.inputs.app_id }}
+        run: npx expo prebuild --platform android --no-install
+
+      - name: Make gradlew executable
+        working-directory: apps/${{ github.event.inputs.app_id }}/android
+        run: chmod +x gradlew
+
+      - name: Build APK
+        working-directory: apps/${{ github.event.inputs.app_id }}/android
+        run: ./gradlew assembleDebug --no-daemon
+        env:
+          GRADLE_OPTS: '-Dorg.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=512m'
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-${{ github.event.inputs.app_id }}-debug
+          path: apps/${{ github.event.inputs.app_id }}/android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 7
