@@ -40,7 +40,9 @@ jobs:
 
       - name: Expo Prebuild
         working-directory: apps/${{ github.event.inputs.app_id }}
-        run: npx expo prebuild --platform android --no-install
+        run: npx expo prebuild --platform android
+        env:
+          NODE_OPTIONS: '--max-old-space-size=4096'
 
       - name: Make gradlew executable
         working-directory: apps/${{ github.event.inputs.app_id }}/android
