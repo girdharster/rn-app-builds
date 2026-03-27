@@ -1,14 +1,14 @@
 {
   "name": "275o3p6t4e10",
   "version": "1.0.0",
-  "main": "node_modules/expo/AppEntry.js",
+  "main": "expo-router/entry",
   "scripts": {
     "start": "expo start",
     "android": "expo run:android"
   },
   "dependencies": {
     "expo": "~51.0.28",
-    "expo-router": "~4.0.0",
+    "expo-router": "~3.5.0",
     "expo-status-bar": "~1.12.1",
     "react": "18.2.0",
     "react-dom": "18.3.1",

@@ -7,6 +7,7 @@
     "platforms": [
       "android"
     ],
+    "scheme": "275o3p6t4e10",
     "android": {
       "package": "com.appbuilder.a275o3p6t4e10",
       "adaptiveIcon": {
