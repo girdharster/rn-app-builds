@@ -70,6 +70,21 @@ jobs:
           echo "android.minSdkVersion=24" >> android/gradle.properties
           echo "minSdkVersion=24 set"
 
+          # 2b. Ensure splashscreen_background color exists (expo prebuild references it but may not create it)
+          mkdir -p "android/app/src/main/res/values"
+          if [ ! -f "android/app/src/main/res/values/colors.xml" ]; then
+            printf '<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <color name="splashscreen_background">#ffffff</color>
+</resources>
+' > android/app/src/main/res/values/colors.xml
+            echo "Created colors.xml with splashscreen_background"
+          elif ! grep -q "splashscreen_background" android/app/src/main/res/values/colors.xml; then
+            sed -i 's|</resources>|  <color name="splashscreen_background">#ffffff</color>
+</resources>|' android/app/src/main/res/values/colors.xml
+            echo "Added splashscreen_background to existing colors.xml"
+          fi
+
           # 3. Ensure launcher icon resources exist
           MAIN_RES="android/app/src/main/res"
           mkdir -p "$MAIN_RES/drawable"
