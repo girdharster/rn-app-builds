@@ -44,29 +44,17 @@ jobs:
         env:
           NODE_OPTIONS: '--max-old-space-size=4096'
 
-      - name: Ensure applicationId in build.gradle
+      - name: Patch applicationPackageName in build.gradle
         working-directory: apps/${{ github.event.inputs.app_id }}
         run: |
           PACKAGE=$(node -e "const app = require('./app.json'); console.log(app.expo.android.package)")
-          echo "Package name: $PACKAGE"
-
-          echo "--- build.gradle (applicationId/namespace lines) ---"
-          grep -n "applicationId\|namespace\|packageName" android/app/build.gradle || echo "(none found)"
-
-          # If applicationId is missing from defaultConfig, inject it
-          if ! grep -q "applicationId" android/app/build.gradle; then
-            echo "applicationId not found — injecting into defaultConfig"
-            sed -i "/minSdkVersion/i\            applicationId \"$PACKAGE\"" android/app/build.gradle
-            echo "After fix:"
-            grep -n "applicationId\|namespace" android/app/build.gradle
-          else
-            echo "applicationId already present — no patch needed"
-          fi
-
-          echo "--- react-native config packageName ---"
-          node node_modules/.bin/react-native config 2>/dev/null \
-            | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('project',{}).get('android',{}).get('packageName','NOT FOUND'))" \
-            || echo "(config command failed)"
+          echo "Package: $PACKAGE"
+          # Inject applicationPackageName into the react {} block so RNGP
+          # skips the react-native config CLI call entirely
+          sed -i "s/react {/react {
+        applicationPackageName = \"$PACKAGE\"/" android/app/build.gradle
+          echo "react {} block after patch:"
+          grep -A 6 "react {" android/app/build.gradle | head -10
 
       - name: Make gradlew executable
         working-directory: apps/${{ github.event.inputs.app_id }}/android
