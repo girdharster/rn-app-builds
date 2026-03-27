@@ -104,7 +104,7 @@ jobs:
       - name: Build APK
         working-directory: apps/${{ github.event.inputs.app_id }}/android
         run: |
-          ./gradlew assembleDebug --no-daemon -Dorg.gradle.jvmargs="-Xmx4g -XX:MaxMetaspaceSize=512m"
+          ./gradlew assembleRelease --no-daemon -Dorg.gradle.jvmargs="-Xmx4g -XX:MaxMetaspaceSize=512m"
 
 
       - name: Sign APK with production keystore
@@ -120,8 +120,8 @@ jobs:
           APKSIGNER=$(ls $ANDROID_HOME/build-tools/*/apksigner 2>/dev/null | sort -V | tail -1)
           echo "Using apksigner: $APKSIGNER"
 
-          APK_IN="app/build/outputs/apk/debug/app-debug.apk"
-          APK_OUT="app/build/outputs/apk/debug/app-signed.apk"
+          APK_IN="app/build/outputs/apk/release/app-release.apk"
+          APK_OUT="app/build/outputs/apk/release/app-signed.apk"
 
           "$APKSIGNER" sign \
             --ks /tmp/appypie.keystore \
@@ -139,5 +139,5 @@ jobs:
         if: success()
         with:
           name: app-signed-${{ github.event.inputs.app_id }}
-          path: apps/${{ github.event.inputs.app_id }}/android/app/build/outputs/apk/debug/app-signed.apk
+          path: apps/${{ github.event.inputs.app_id }}/android/app/build/outputs/apk/release/app-signed.apk
           retention-days: 7
