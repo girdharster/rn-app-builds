@@ -47,101 +47,30 @@ jobs:
         working-directory: apps/${{ github.event.inputs.app_id }}
         run: |
           set -e
-
-          # Detect package name from app.json
-          PACKAGE_NAME=$(node -e "const a=require('./app.json'); console.log(a.expo.android.package)")
-          echo "Package name: $PACKAGE_NAME"
-
-          # Create the generated output directory
           AUTOLINKING_DIR="android/app/build/generated/autolinking/src/main/java/com/facebook/react"
           mkdir -p "$AUTOLINKING_DIR"
 
-          # Write PackageList.java
-          node -e "
-          const fs = require('fs');
-          const dir = '$AUTOLINKING_DIR';
-          const content = `package com.facebook.react;
+          # Decode PackageList.java from base64 (avoids all shell quoting issues)
+          echo "cGFja2FnZSBjb20uZmFjZWJvb2sucmVhY3Q7CgppbXBvcnQgYW5kcm9pZC5hcHAuQXBwbGljYXRpb247CmltcG9ydCBhbmRyb2lkLmNvbnRlbnQuQ29udGV4dDsKaW1wb3J0IGFuZHJvaWQuY29udGVudC5yZXMuUmVzb3VyY2VzOwppbXBvcnQgY29tLmZhY2Vib29rLnJlYWN0LlJlYWN0UGFja2FnZTsKaW1wb3J0IGNvbS5mYWNlYm9vay5yZWFjdC5zaGVsbC5NYWluUGFja2FnZUNvbmZpZzsKaW1wb3J0IGNvbS5mYWNlYm9vay5yZWFjdC5zaGVsbC5NYWluUmVhY3RQYWNrYWdlOwppbXBvcnQgamF2YS51dGlsLkFycmF5czsKaW1wb3J0IGphdmEudXRpbC5BcnJheUxpc3Q7CmltcG9ydCBjb20uc3dtYW5zaW9uLmdlc3R1cmVoYW5kbGVyLlJOR2VzdHVyZUhhbmRsZXJQYWNrYWdlOwppbXBvcnQgY29tLnN3bWFuc2lvbi5yZWFuaW1hdGVkLlJlYW5pbWF0ZWRQYWNrYWdlOwppbXBvcnQgY29tLnRoM3Jkd2F2ZS5zYWZlYXJlYWNvbnRleHQuU2FmZUFyZWFDb250ZXh0UGFja2FnZTsKaW1wb3J0IGNvbS5zd21hbnNpb24ucm5zY3JlZW5zLlJOU2NyZWVuc1BhY2thZ2U7CmltcG9ydCBjb20uaG9yY3J1eC5zdmcuU3ZnUGFja2FnZTsKCnB1YmxpYyBjbGFzcyBQYWNrYWdlTGlzdCB7CiAgcHJpdmF0ZSBBcHBsaWNhdGlvbiBhcHBsaWNhdGlvbjsKICBwcml2YXRlIFJlYWN0TmF0aXZlSG9zdCByZWFjdE5hdGl2ZUhvc3Q7CiAgcHJpdmF0ZSBSZWFjdEluc3RhbmNlTWFuYWdlciByZWFjdEluc3RhbmNlTWFuYWdlcjsKICBwcml2YXRlIE1haW5QYWNrYWdlQ29uZmlnIG1Db25maWc7CgogIHB1YmxpYyBQYWNrYWdlTGlzdChSZWFjdEluc3RhbmNlTWFuYWdlciByZWFjdEluc3RhbmNlTWFuYWdlcikgewogICAgdGhpcyhyZWFjdEluc3RhbmNlTWFuYWdlci5nZXRDdXJyZW50UmVhY3RDb250ZXh0KCkuZ2V0QXBwbGljYXRpb25Db250ZXh0KCkpOwogICAgdGhpcy5yZWFjdEluc3RhbmNlTWFuYWdlciA9IHJlYWN0SW5zdGFuY2VNYW5hZ2VyOwogICAgcmVhY3ROYXRpdmVIb3N0ID0gbnVsbDsKICB9CgogIHB1YmxpYyBQYWNrYWdlTGlzdChBcHBsaWNhdGlvbiBhcHBsaWNhdGlvbikgewogICAgdGhpcyhhcHBsaWNhdGlvbiwgbnVsbCk7CiAgICByZWFjdE5hdGl2ZUhvc3QgPSBudWxsOwogIH0KCiAgcHVibGljIFBhY2thZ2VMaXN0KFJlYWN0TmF0aXZlSG9zdCByZWFjdE5hdGl2ZUhvc3QpIHsKICAgIHRoaXMocmVhY3ROYXRpdmVIb3N0LmdldEFwcGxpY2F0aW9uKCksIHJlYWN0TmF0aXZlSG9zdC5nZXRVc2VEZXZlbG9wZXJTdXBwb3J0KCkgPyBNYWluUGFja2FnZUNvbmZpZy5idWlsZGVyKCkuYnVpbGQoKSA6IG51bGwpOwogICAgdGhpcy5yZWFjdE5hdGl2ZUhvc3QgPSByZWFjdE5hdGl2ZUhvc3Q7CiAgfQoKICBwdWJsaWMgUGFja2FnZUxpc3QoQXBwbGljYXRpb24gYXBwbGljYXRpb24sIE1haW5QYWNrYWdlQ29uZmlnIGhhcmRjb2RlZENvbmZpZykgewogICAgdGhpcy5hcHBsaWNhdGlvbiA9IGFwcGxpY2F0aW9uOwogICAgbUNvbmZpZyA9IGhhcmRjb2RlZENvbmZpZzsKICB9CgogIHByaXZhdGUgUmVhY3ROYXRpdmVIb3N0IGdldFJlYWN0TmF0aXZlSG9zdCgpIHsKICAgIHJldHVybiByZWFjdE5hdGl2ZUhvc3Q7CiAgfQoKICBwcml2YXRlIFJlc291cmNlcyBnZXRSZXNvdXJjZXMoKSB7CiAgICByZXR1cm4gZ2V0QXBwbGljYXRpb24oKS5nZXRSZXNvdXJjZXMoKTsKICB9CgogIHByaXZhdGUgQXBwbGljYXRpb24gZ2V0QXBwbGljYXRpb24oKSB7CiAgICBpZiAodGhpcy5yZWFjdE5hdGl2ZUhvc3QgPT0gbnVsbCkgcmV0dXJuIHRoaXMuYXBwbGljYXRpb247CiAgICByZXR1cm4gdGhpcy5yZWFjdE5hdGl2ZUhvc3QuZ2V0QXBwbGljYXRpb24oKTsKICB9CgogIHByaXZhdGUgQ29udGV4dCBnZXRBcHBsaWNhdGlvbkNvbnRleHQoKSB7CiAgICByZXR1cm4gZ2V0QXBwbGljYXRpb24oKS5nZXRBcHBsaWNhdGlvbkNvbnRleHQoKTsKICB9CgogIHB1YmxpYyBBcnJheUxpc3Q8UmVhY3RQYWNrYWdlPiBnZXRQYWNrYWdlcygpIHsKICAgIHJldHVybiBuZXcgQXJyYXlMaXN0PD4oQXJyYXlzLmFzTGlzdCgKICAgICAgbmV3IE1haW5SZWFjdFBhY2thZ2UobUNvbmZpZyksCiAgICAgIG5ldyBSTkdlc3R1cmVIYW5kbGVyUGFja2FnZSgpLAogICAgICBuZXcgUmVhbmltYXRlZFBhY2thZ2UoKSwKICAgICAgbmV3IFNhZmVBcmVhQ29udGV4dFBhY2thZ2UoKSwKICAgICAgbmV3IFJOU2NyZWVuc1BhY2thZ2UoKSwKICAgICAgbmV3IFN2Z1BhY2thZ2UoKQogICAgKSk7CiAgfQp9Cg==" | base64 -d > "$AUTOLINKING_DIR/PackageList.java"
+          echo "=== PackageList.java written ==="
+          head -5 "$AUTOLINKING_DIR/PackageList.java"
 
-          import android.app.Application;
-          import android.content.Context;
-          import android.content.res.Resources;
-          import com.facebook.react.ReactPackage;
-          import com.facebook.react.shell.MainPackageConfig;
-          import com.facebook.react.shell.MainReactPackage;
-          import java.util.Arrays;
-          import java.util.ArrayList;
-          import com.swmansion.gesturehandler.RNGestureHandlerPackage;
-          import com.swmansion.reanimated.ReanimatedPackage;
-          import com.th3rdwave.safeareacontext.SafeAreaContextPackage;
-          import com.swmansion.rnscreens.RNScreensPackage;
-          import com.horcrux.svg.SvgPackage;
+          # Patch build.gradle to disable autolinking task using Python (no quoting issues)
+          python3 -c "
+          import sys
+          patch = '''
 
-          public class PackageList {
-            private Application application;
-            private ReactNativeHost reactNativeHost;
-            private ReactInstanceManager reactInstanceManager;
-            private MainPackageConfig mConfig;
-
-            public PackageList(ReactInstanceManager reactInstanceManager) {
-              this(reactInstanceManager.getCurrentReactContext().getApplicationContext());
-              this.reactInstanceManager = reactInstanceManager;
-              reactNativeHost = null;
-            }
-
-            public PackageList(Application application) {
-              this(application, null);
-              reactNativeHost = null;
-            }
-
-            public PackageList(ReactNativeHost reactNativeHost) {
-              this(reactNativeHost.getApplication(), reactNativeHost.getUseDeveloperSupport() ? MainPackageConfig.builder().build() : null);
-              this.reactNativeHost = reactNativeHost;
-            }
-
-            public PackageList(Application application, MainPackageConfig hardcodedConfig) {
-              this.application = application;
-              mConfig = hardcodedConfig;
-            }
-
-            private ReactNativeHost getReactNativeHost() {
-              return reactNativeHost;
-            }
-
-            private Resources getResources() {
-              return getApplication().getResources();
-            }
-
-            private Application getApplication() {
-              if (this.reactNativeHost == null) return this.application;
-              return this.reactNativeHost.getApplication();
-            }
-
-            private Context getApplicationContext() {
-              return getApplication().getApplicationContext();
-            }
-
-            public ArrayList<ReactPackage> getPackages() {
-              return new ArrayList<>(Arrays.asList(
-                new MainReactPackage(mConfig),
-                new RNGestureHandlerPackage(),
-                new ReanimatedPackage(),
-                new SafeAreaContextPackage(),
-                new RNScreensPackage(),
-                new SvgPackage()
-              ));
-            }
+          // Disable autolinking task - PackageList.java is pre-generated
+          afterEvaluate {
+              project.tasks.matching { it.name.startsWith(\"generate\") && it.name.endsWith(\"AutolinkingPackageList\") }.configureEach {
+                  enabled = false
+              }
           }
-          `;
-          fs.writeFileSync(dir + '/PackageList.java', content);
-          console.log('PackageList.java written to ' + dir);
+          '''
+          with open('android/app/build.gradle', 'a') as f:
+              f.write(patch)
+          print('build.gradle patched')
           "
-
-          echo "=== PackageList.java ==="
-          cat "$AUTOLINKING_DIR/PackageList.java"
-
-          # Patch android/app/build.gradle to disable autolinking tasks
-          printf '\n// Disable autolinking — PackageList.java is pre-generated\nafterEvaluate {\n    project.tasks.matching { it.name.startsWith("generate") && it.name.endsWith("AutolinkingPackageList") }.configureEach {\n        enabled = false\n    }\n}\n' >> android/app/build.gradle
-
           echo "=== Last 15 lines of build.gradle ==="
           tail -15 android/app/build.gradle
 
