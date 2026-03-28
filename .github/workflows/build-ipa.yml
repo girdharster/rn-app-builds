@@ -89,33 +89,6 @@ jobs:
 
           echo "Xcode project patched"
 
-      - name: Create ExportOptions.plist
-        working-directory: apps/${{ github.event.inputs.app_id }}
-        run: |
-          cat > ios/ExportOptions.plist << 'PLIST'
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-            <key>method</key>
-            <string>enterprise</string>
-            <key>teamID</key>
-            <string>32M9V9VLQY</string>
-            <key>signingStyle</key>
-            <string>manual</string>
-            <key>provisioningProfiles</key>
-            <dict>
-              <key>com.appypiellc.appypiellc</key>
-              <string>Appypiellc 33</string>
-            </dict>
-            <key>compileBitcode</key>
-            <false/>
-            <key>stripSwiftSymbols</key>
-            <true/>
-          </dict>
-          </plist>
-          PLIST
-
       - name: Build archive
         working-directory: apps/${{ github.event.inputs.app_id }}
         run: |
@@ -137,24 +110,38 @@ jobs:
             -allowProvisioningUpdates \
             | tail -20
 
-      - name: Export IPA
-        working-directory: apps/${{ github.event.inputs.app_id }}
+      - name: Create IPA from archive
         run: |
-          xcodebuild -exportArchive \
-            -archivePath $RUNNER_TEMP/app.xcarchive \
-            -exportOptionsPlist ios/ExportOptions.plist \
-            -exportPath $RUNNER_TEMP/ipa-output \
-            -allowProvisioningUpdates \
-            | tail -10
+          set -e
+          ARCHIVE=$RUNNER_TEMP/app.xcarchive
 
-          ls -la $RUNNER_TEMP/ipa-output/
-          echo "IPA exported successfully!"
+          # Find the .app inside the archive
+          APP_PATH=$(find "$ARCHIVE/Products/Applications" -name "*.app" -maxdepth 1 | head -1)
+          APP_NAME=$(basename "$APP_PATH")
+          echo "Found app: $APP_NAME"
+
+          # Embed provisioning profile inside .app
+          cp ~/Library/MobileDevice/Provisioning\ Profiles/e4579292-6256-42d9-bf02-a7fce6957463.mobileprovision "$APP_PATH/embedded.mobileprovision"
+
+          # Re-sign with the enterprise certificate
+          /usr/bin/codesign --force --sign "iPhone Distribution: Appy Pie LLC" \
+            --entitlements <(security cms -D -i "$APP_PATH/embedded.mobileprovision" | plutil -extract Entitlements xml1 -o - -) \
+            "$APP_PATH"
+          echo "App re-signed"
+
+          # Create IPA (standard Payload/ structure)
+          mkdir -p $RUNNER_TEMP/ipa-output/Payload
+          cp -r "$APP_PATH" $RUNNER_TEMP/ipa-output/Payload/
+          cd $RUNNER_TEMP/ipa-output
+          zip -r app-enterprise.ipa Payload/
+          ls -la app-enterprise.ipa
+          echo "IPA created successfully!"
 
       - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
           name: app-enterprise-${{ github.event.inputs.app_id }}
-          path: ${{ runner.temp }}/ipa-output/*.ipa
+          path: ${{ runner.temp }}/ipa-output/app-enterprise.ipa
           retention-days: 30
 
       - name: Cleanup keychain
