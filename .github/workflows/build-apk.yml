@@ -90,7 +90,8 @@ jobs:
           for DENSITY in mipmap-mdpi mipmap-hdpi mipmap-xhdpi mipmap-xxhdpi mipmap-xxxhdpi; do
             mkdir -p "$MAIN_RES/$DENSITY"
             for ICON in ic_launcher.png ic_launcher_round.png ic_launcher_foreground.png; do
-              if [ ! -f "$MAIN_RES/$DENSITY/$ICON" ]; then
+              ICON_BASE=$(echo "$ICON" | sed 's/\.png$//')
+              if [ ! -f "$MAIN_RES/$DENSITY/$ICON" ] && [ ! -f "$MAIN_RES/$DENSITY/$ICON_BASE.webp" ]; then
                 printf '%s' 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGP4//8/AAX+Av4N70a4AAAAAElFTkSuQmCC' | base64 -d > "$MAIN_RES/$DENSITY/$ICON"
               fi
             done
