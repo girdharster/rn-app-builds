@@ -93,7 +93,15 @@ jobs:
         working-directory: apps/${{ github.event.inputs.app_id }}
         run: |
           WORKSPACE=$(find ios -name "*.xcworkspace" -not -path "*/Pods/*" | head -1)
-          SCHEME=$(xcodebuild -list -workspace "$WORKSPACE" -json 2>/dev/null | node -e "const d=require('fs').readFileSync('/dev/stdin','utf8');const j=JSON.parse(d);console.log(j.workspace.schemes[0])")
+          # Get the app scheme (not a pod scheme like 'boost')
+          APP_NAME=$(node -e "const a=require('./app.json');console.log(a.expo.name.replace(/[^a-zA-Z0-9]/g,''))")
+          ALL_SCHEMES=$(xcodebuild -list -workspace "$WORKSPACE" -json 2>/dev/null | node -e "const d=require('fs').readFileSync('/dev/stdin','utf8');const j=JSON.parse(d);console.log(j.workspace.schemes.join(','))")
+          echo "Available schemes: $ALL_SCHEMES"
+          # Use the app name as scheme (expo prebuild creates it), fallback to first non-pod scheme
+          SCHEME=$(echo "$ALL_SCHEMES" | tr ',' '\n' | grep -i "$APP_NAME" | head -1)
+          if [ -z "$SCHEME" ]; then
+            SCHEME=$(echo "$ALL_SCHEMES" | tr ',' '\n' | grep -v -E "^(boost|Pods-|React|hermes|jsi)" | head -1)
+          fi
           echo "Building workspace: $WORKSPACE scheme: $SCHEME"
 
           xcodebuild archive \
