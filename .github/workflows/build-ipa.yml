@@ -115,17 +115,43 @@ jobs:
           set -e
           ARCHIVE=$RUNNER_TEMP/app.xcarchive
 
-          # Find the .app inside the archive
-          APP_PATH=$(find "$ARCHIVE/Products/Applications" -name "*.app" -maxdepth 1 | head -1)
+          # Debug: show archive structure
+          echo "Archive structure:"
+          find "$ARCHIVE" -name "*.app" -type d 2>/dev/null | head -5
+
+          # Find the .app anywhere in the archive
+          APP_PATH=$(find "$ARCHIVE" -name "*.app" -type d -not -path "*/Frameworks/*" | head -1)
+          if [ -z "$APP_PATH" ]; then
+            echo "ERROR: No .app found in archive"
+            find "$ARCHIVE" -maxdepth 3 -type d
+            exit 1
+          fi
           APP_NAME=$(basename "$APP_PATH")
-          echo "Found app: $APP_NAME"
+          echo "Found app: $APP_NAME at $APP_PATH"
 
           # Embed provisioning profile inside .app
           cp ~/Library/MobileDevice/Provisioning\ Profiles/e4579292-6256-42d9-bf02-a7fce6957463.mobileprovision "$APP_PATH/embedded.mobileprovision"
+          echo "Profile embedded"
 
-          # Re-sign with the enterprise certificate
+          # Extract entitlements from provisioning profile
+          security cms -D -i "$APP_PATH/embedded.mobileprovision" > /tmp/prov.plist
+          /usr/libexec/PlistBuddy -x -c "Print :Entitlements" /tmp/prov.plist > /tmp/entitlements.plist
+          echo "Entitlements extracted"
+
+          # Re-sign frameworks first (if any)
+          if [ -d "$APP_PATH/Frameworks" ]; then
+            find "$APP_PATH/Frameworks" -name "*.framework" -type d | while read fw; do
+              /usr/bin/codesign --force --sign "iPhone Distribution: Appy Pie LLC" "$fw"
+            done
+            find "$APP_PATH/Frameworks" -name "*.dylib" -type f | while read dl; do
+              /usr/bin/codesign --force --sign "iPhone Distribution: Appy Pie LLC" "$dl"
+            done
+            echo "Frameworks re-signed"
+          fi
+
+          # Re-sign the main app
           /usr/bin/codesign --force --sign "iPhone Distribution: Appy Pie LLC" \
-            --entitlements <(security cms -D -i "$APP_PATH/embedded.mobileprovision" | plutil -extract Entitlements xml1 -o - -) \
+            --entitlements /tmp/entitlements.plist \
             "$APP_PATH"
           echo "App re-signed"
 
@@ -133,7 +159,7 @@ jobs:
           mkdir -p $RUNNER_TEMP/ipa-output/Payload
           cp -r "$APP_PATH" $RUNNER_TEMP/ipa-output/Payload/
           cd $RUNNER_TEMP/ipa-output
-          zip -r app-enterprise.ipa Payload/
+          zip -r -q app-enterprise.ipa Payload/
           ls -la app-enterprise.ipa
           echo "IPA created successfully!"
 
