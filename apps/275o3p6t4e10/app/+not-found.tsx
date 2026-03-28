@@ -1,10 +1,5 @@
-import { useEffect } from 'react';
-import { useRouter } from 'expo-router';
+import { Redirect } from 'expo-router';
 
 export default function NotFound() {
-  const router = useRouter();
-  useEffect(() => {
-    router.replace('/');
-  }, []);
-  return null;
+  return <Redirect href="/" />;
 }

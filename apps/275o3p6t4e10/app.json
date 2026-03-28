@@ -5,15 +5,12 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "platforms": [
-      "android"
+      "ios"
     ],
     "scheme": "275o3p6t4e10",
-    "android": {
-      "package": "com.appbuilder.a275o3p6t4e10",
-      "adaptiveIcon": {
-        "backgroundColor": "#ffffff"
-      },
-      "minSdkVersion": 24
+    "ios": {
+      "bundleIdentifier": "com.appypiellc.appypiellc",
+      "supportsTablet": true
     },
     "sdkVersion": "51.0.0"
   }
